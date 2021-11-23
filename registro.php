@@ -102,12 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($_FILES['foto']['name'] = null) {
             $usuario->setFoto("usuario_login.png");
             } else {
-                
-                 if ($_FILES['profilePicture']['name'] != null) {
-                    $tmpFile = filter_var($_FILES['profilePicture']['tmp_name'], FILTER_SANITIZE_SPECIAL_CHARS);
-                    $pictureFileName = filter_var($_FILES['profilePicture']['name'], FILTER_SANITIZE_SPECIAL_CHARS);
-                    $pictureExtension = substr($pictureFileName, strrpos($pictureFileName, '.'));
-                    $pictureNewName = md5(time()+rand(0,999999)).$pictureExtension;
+             
             //Guardar nombre foto temporal
                 $fototemp = filter_var($_FILES['foto']['tmp_name'], FILTER_SANITIZE_SPECIAL_CHARS);
             //Guardar nombre foto
@@ -177,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
 }
 
-}
+
 
 
 //Calculamos un token
