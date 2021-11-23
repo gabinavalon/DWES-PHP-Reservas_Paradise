@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error = true;
         } else {
 
-            if (($password) != ($password2)) {
+            if (($_POST['password']) != ($_POST['password2'])) {
                 MensajesFlash::anadir_mensaje("Las contraseñas no coinciden");
                 $error = true;
             }
@@ -99,33 +99,59 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if (!$error) {
 
-        if (empty($_FILES['foto']['name'])) {
-            $usuario->setFoto("fotogenerica.png");
-        } else {
-            //Copiar foto
-            //Generamos un nombre para la foto
-            $nombre_foto = md5(time() + rand(0, 999999));
-            $extension_foto = substr($_FILES['foto']['name'], strrpos($_FILES['foto']['name'], '.') + 1);
+        if ($_FILES['foto']['name'] = null) {
+            $usuario->setFoto("usuario_login.png");
+            } else {
+                
+                 if ($_FILES['profilePicture']['name'] != null) {
+                    $tmpFile = filter_var($_FILES['profilePicture']['tmp_name'], FILTER_SANITIZE_SPECIAL_CHARS);
+                    $pictureFileName = filter_var($_FILES['profilePicture']['name'], FILTER_SANITIZE_SPECIAL_CHARS);
+                    $pictureExtension = substr($pictureFileName, strrpos($pictureFileName, '.'));
+                    $pictureNewName = md5(time()+rand(0,999999)).$pictureExtension;
+            //Guardar nombre foto temporal
+                $fototemp = filter_var($_FILES['foto']['tmp_name'], FILTER_SANITIZE_SPECIAL_CHARS);
+            //Guardar nombre foto
+                $nombrefoto = filter_var($_FILES['foto']['name'], FILTER_SANITIZE_SPECIAL_CHARS);
+            //Guardar extensión de la foto
+                $extension_foto = substr($nombrefoto, strrpos($nombrefoto, '.'));
             //Limpiamos la extensión de la foto
-            $extension_foto = filter_var($extension_foto, FILTER_SANITIZE_SPECIAL_CHARS);
+                $extension_foto = filter_var($extension_foto, FILTER_SANITIZE_SPECIAL_CHARS);
             //Comprobamos que no exista ya una foto con el mismo nombre, si existe calculamos uno nuevo
-            while (file_exists("imagenes/$nombre_foto.$extension_foto")) {
-                $nombre_foto = md5(time() + rand(0, 999999));
+                $nombre_foto_final = md5(time()+rand(0,999999)).$extension_foto;
+            
+            do {
+                $nombre_foto_final = md5(time() + rand(0, 999999)) . $extension_foto;
+            } while (file_exists("imagenes/$nombre_foto_final"));  //por si existiera ya un archivo con ese nombre
+            
+             move_uploaded_file($fototemp, "imagenes/$nombre_foto_final");
+
+            list($width, $height, $type) = getimagesize($fototemp);
+            $width = ($width*150)/$height;
+            $height = 150;
+
+            if ($type == IMAGETYPE_JPEG) {
+                $img = imagecreatefromjpeg($fototemp);
+                $imgResized = imagescale($img, $width, $height);
+                imagejpeg($imgResized, $nombre_foto_final);
+            } elseif ($type == IMAGETYPE_PNG) {
+                $img = imagecreatefrompng($fototemp);
+                $imgResized = imagescale($img, $width, $height);
+                imagepng($imgResized, $nombre_foto_final);
+            } elseif ($type == IMAGETYPE_GIF) {
+                $img = imagecreatefromgif($fototemp);
+                $imgResized = imagescale($img, $width, $height);
+                imagejpeg($imgResized, $nombre_foto_final);
             }
-            //Redimensionamos la imagen
-            $image = $_FILES['foto']['tmp_name'];
-           // $new_height = 150;       
-            //$image = imagescale($image, $new_width= -1, $new_height);
-            //movemos la foto a la carpeta que queramos guardarla y con el nombre original
-            move_uploaded_file($image, "imagenes/$nombre_foto.$extension_foto");
-            $usuario->setFoto("$nombre_foto.$extension_foto");
-        }
+            
+           
 
-        
-        
-        
+            $usuario->setFoto($nombre_foto_final);
+            }
+   
 
-        //Limpiamos los datos de entrada
+
+
+//Limpiamos los datos de entrada
 
         $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
         $nombre = filter_var($_POST['nombre'], FILTER_SANITIZE_SPECIAL_CHARS);
@@ -145,8 +171,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         MensajesFlash::anadir_mensaje("Usuario creado.");
         header('Location: index.php');
         die();
-    }
+    
+        
+            }
+            
 }
+
+}
+
 
 //Calculamos un token
 $token = md5(time() + rand(0, 999));
